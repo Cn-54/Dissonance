@@ -3,16 +3,18 @@
 set -e
 
 for dir in Lab/Docker-*/; do
-    name=$(basename "$dir")
+
+    name=$(basename "$dir" | tr '[:upper:]' '[:lower:]')
 
     echo "Building $name..."
 
-    docker build \
+    sudo docker build \
         -t "$name" \
         -f "$dir/Dockerfile" \
         .
 
     echo "$name built successfully."
+
 done
 
 echo

@@ -63,47 +63,49 @@ class ModuleView(discord.ui.View):
 
 
 async def setup():
+
     guild = bot.get_guild(GUILD_ID)
 
-    if not guild: # checks if guild actually exists
-        print(" [!] Guild not found")
+    if not guild:
+        print("[!] Guild not found")
         exit()
-    
-    category = discord.utils.get(guild.categories, name = AGENTS_CATEGORY_NAME) 
 
-    if not category: # checks if AGENTS category exists if it doesnt create it
-        print(" [!] AGENTS Category not found")
-        category = await guild.create_category(AGENTS_CATEGORY_NAME)
-        print(" [+] AGENTS Category created")
+    # Find the existing AGENTS category
+    category = discord.utils.get(
+        guild.categories,
+        name=AGENTS_CATEGORY_NAME
+    )
 
-    categoryModules = discord.utils.get(guild.categories, name = MODULES_CATEGORY_NAME) 
+    if not category:
+        print("[!] AGENTS Category not found")
+        exit()
 
-    if not categoryModules: # checks if MODULES category exists if it doesnt create it
-        print(" [!] MODULES Category not found")
-        categoryModules = await guild.create_category(MODULES_CATEGORY_NAME)
-        print(" [+] MODULES Category created")
-    
-    agent_channel = discord.utils.get(guild.text_channels, name=HOSTNAME)
+    # Find this agent's channel inside AGENTS
+    agent_channel = discord.utils.get(
+        category.text_channels,
+        name=HOSTNAME
+    )
 
-    if not agent_channel: # checks if this agents channel exists if not it creates the channel
-        print(" [!] AGENTS Channel not found")
-        agent_channel = await guild.create_text_channel( HOSTNAME, category=category)
-        print(" [+] AGENTS Channel created")
+    # Create the channel if it doesn't exist
+    if not agent_channel:
 
+        print("[!] AGENTS Channel not found")
 
-    modules_channel = discord.utils.get( guild.text_channels,name=MODULES_CHANNEL_NAME)
+        agent_channel = await guild.create_text_channel(
+            HOSTNAME,
+            category=category
+        )
 
-    if not modules_channel:
-        print(" [!] MODULES Channel not found")
-        modules_channel = await guild.create_text_channel(MODULES_CHANNEL_NAME, category=category)
-        print(" [+] MODULES Channel created")
+        print(f"[+] AGENTS Channel created: #{HOSTNAME}")
 
-    # create the panel for agent info a modules
+    else:
+        print(f"[+] AGENTS Channel found: #{HOSTNAME}")
+
+    # Create the panel
     Panel = await agent_channel.send(
         embed=embed(),
         view=ModuleView()
     )
-
 
 
 @bot.event
