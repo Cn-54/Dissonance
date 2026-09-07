@@ -43,8 +43,7 @@ def embed():
     minutes, seconds = divmod(uptime, 60)
 
     e = discord.Embed(
-        title="🟢 DISSONANCE",
-        description="C2 AGENT • ONLINE"
+        title="DISSONANCE",
     )
 
     e.add_field(
