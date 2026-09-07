@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+DISCORD_TOKEN="YOUR_DISCORD_BOT_TOKEN"
+GUILD_ID="YOUR_GUILD_ID"
+
+for dir in Lab/Docker-*/; do
+    image=$(basename "$dir")
+    
+    docker run -d \
+        --name "$image" \
+        -e DISCORD_TOKEN="$DISCORD_TOKEN" \
+        -e GUILD_ID="$GUILD_ID" \
+        "$image"
+done
+
+echo
+echo "All Dissonance containers started."
