@@ -110,7 +110,7 @@ Lab/
     └── Dockerfile
 ```
 
-This provides isolated environments for testing multiple agents without running the agents directly on the host system.
+Docker provides isolated lab containers for testing the agents without running them directly on the host.
 
 ## How To Use
 
