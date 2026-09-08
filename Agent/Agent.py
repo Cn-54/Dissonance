@@ -174,6 +174,7 @@ async def update_panel():
         panel = None
 
 
+# code execution deliberetly removed to stop dual use potential
 async def run_module(name):
     module = modules.get(name)
 
@@ -181,16 +182,9 @@ async def run_module(name):
         await send_log(f"Module not found: {name}")
         return
 
-    await send_log(f"Starting module: {name}")
-
-    async with module_run_lock:
-        temp_path = None
+    await send_log(f"Reading module: {name}")
 
     try:
-        await send_log(
-            f"Downloading module: {name}"
-        )
-
         response = await asyncio.to_thread(
             requests.get,
             module["url"],
@@ -199,50 +193,13 @@ async def run_module(name):
 
         response.raise_for_status()
 
-        with tempfile.NamedTemporaryFile(
-            suffix=".py",
-            delete=False
-        ) as temp_file:
-            temp_path = Path(temp_file.name)
-            temp_file.write(response.content)
+        content = response.text
 
-        await send_log(
-            f"Module downloaded successfully: {name}"
+        await agent_channel.send(
+            f"**Module: `{name}`**\n```text\n{content}\n```"
         )
 
-        await send_log(
-            f"Executing module: {name}"
-        )
-
-        result = await asyncio.to_thread(
-            subprocess.run,
-            [
-                sys.executable,
-                str(temp_path),
-                "--token",
-                TOKEN,
-                "--channel",
-                str(agent_channel.id),
-                "--server",
-                str(GUILD_ID),
-            ],
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode != 0:
-            await send_log(
-                f"Module failed: {name} - exit code {result.returncode}"
-            )
-
-            if result.stderr:
-                await send_log(
-                    f"Module stderr: {result.stderr.strip()}"
-                )
-        else:
-            await send_log(
-                f"Module completed successfully: {name}"
-            )
+        await send_log(f"Module displayed successfully: {name}")
 
     except requests.RequestException as error:
         await send_log(
@@ -252,14 +209,6 @@ async def run_module(name):
     except Exception as error:
         await send_log(
             f"Module error: {name} - {error}"
-        )
-
-    finally:
-        if temp_path:
-            temp_path.unlink(missing_ok=True)
-
-        await send_log(
-            f"Module execution finished: {name}"
         )
 
 class ModuleView(discord.ui.View):

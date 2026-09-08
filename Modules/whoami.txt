@@ -1,0 +1,9 @@
+WHOAMI
+
+Purpose:
+Demonstrates how an agent could request
+information from a module.
+
+Expected output:
+username
+hostname
