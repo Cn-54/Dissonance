@@ -1,31 +1,45 @@
+import asyncio
 import os
+import platform
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
 import discord
 import requests
-import socket
-import time
-import platform
-import asyncio
+
+# Configuration
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID"))
+
 HOSTNAME = socket.gethostname()
 
 MODULES_CATEGORY_NAME = "MODULES"
 AGENTS_CATEGORY_NAME = "AGENTS"
 LOGS_CATEGORY_NAME = "LOGS"
+
 MODULES_CHANNEL_NAME = "modules"
 LOGS_CHANNEL_NAME = "logs"
 
-start_time = time.time()
-refresh_lock = asyncio.Lock()
-module_run_lock = asyncio.Lock()
 
+# Agent state
+
+start_time = time.time()
 
 modules = {}
+
 modules_channel = None
 agent_channel = None
 logs_channel = None
 panel = None
+
+refresh_lock = asyncio.Lock()
+module_run_lock = asyncio.Lock()
+
 
 def public_ip():
     try:
