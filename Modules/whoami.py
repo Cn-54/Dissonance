@@ -1,5 +1,6 @@
 import argparse
 import os
+import pwd
 import platform
 
 import discord
@@ -15,8 +16,9 @@ def main():
     args = parser.parse_args()
 
     # grabs hostname and username
+
+    username = pwd.getpwuid(os.getuid()).pw_name
     hostname = platform.node()
-    username = os.getlogin()
 
     # sets up discord bot
     intents = discord.Intents.default()
