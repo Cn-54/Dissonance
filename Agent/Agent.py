@@ -4,6 +4,7 @@ import requests
 import socket
 import time
 import platform
+import asyncio
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID"))
@@ -16,7 +17,7 @@ MODULES_CHANNEL_NAME = "modules"
 LOGS_CHANNEL_NAME = "logs"
 
 start_time = time.time()
-
+refresh_lock = asyncio.Lock()
 
 modules = {}
 modules_channel = None
@@ -85,9 +86,30 @@ def embed():
     return e
 
 async def refresh_modules():
+    global modules
+
     await send_log("Refreshing modules")
-    pass
-    await send_log("Module refresh complete")
+
+    if not modules_channel:
+        await send_log("Cannot refresh modules - modules channel unavailable")
+        return
+
+    async with refresh_lock:
+        new_modules = {
+            attachment.filename: {
+                "id": attachment.id,
+                "url": attachment.url
+            }
+            async for message in modules_channel.history(limit=None)
+            for attachment in message.attachments
+            if attachment.filename.lower().endswith(".py")
+        }
+
+        modules = new_modules
+
+    await send_log(
+        f"Module refresh complete - {len(modules)} module(s) found"
+    )
 
 async def move_panel():
     global panel
