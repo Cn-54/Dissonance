@@ -111,7 +111,7 @@ async def refresh_modules():
             }
             async for message in modules_channel.history(limit=None)
             for attachment in message.attachments
-            if attachment.filename.lower().endswith(".py")
+            if attachment.filename.lower().endswith(".txt")
         }
 
         modules = new_modules
