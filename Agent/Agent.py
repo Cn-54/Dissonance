@@ -135,6 +135,9 @@ async def move_panel():
     await send_log("New control panel created")
 
 
+def run_modue():
+    pass
+
 class ModuleView(discord.ui.View):
 
     def __init__(self):
@@ -161,6 +164,24 @@ class ModuleView(discord.ui.View):
         
         refresh_button.callback = refresh_callback
         self.add_item(refresh_button)
+
+        for name, info in modules.items():
+
+            button = discord.ui.Button(
+                label=name,
+                style=discord.ButtonStyle.secondary,
+                custom_id=f"module:{info['id']}",
+            )
+
+            async def module_callback(
+                interaction,
+                module_name=name,
+            ):
+                await interaction.response.defer()
+                await run_module(module_name)
+
+            button.callback = module_callback
+            self.add_item(button)
 
 async def send_log(text):
     await logs_channel.send(f"[{HOSTNAME}] {text}")
