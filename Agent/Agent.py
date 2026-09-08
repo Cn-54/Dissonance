@@ -153,38 +153,32 @@ async def move_panel():
 async def update_panel():
     global panel
 
-    if not agent_channel:
+    if not panel:
         await send_log(
-            "Cannot update panel - agent channel unavailable"
+            "Cannot update panel - panel message unavailable"
         )
         return
 
-    if not panel:
-        panel = await agent_channel.send(
-            embed=create_embed(),
-            view=ModuleView()
-        )
-        return
+    await send_log(
+        "Updating control panel"
+    )
 
     try:
         await panel.edit(
-            embed=create_embed(),
+            embed=embed(),
             view=ModuleView()
         )
 
         await send_log(
-            "Control panel updated"
+            "Control panel updated successfully"
         )
 
     except discord.NotFound:
         await send_log(
-            "Control panel not found - creating new panel"
+            "Control panel not found"
         )
 
-        panel = await agent_channel.send(
-            embed=create_embed(),
-            view=ModuleView()
-        )
+        panel = None
 
 
 async def run_module(name):
