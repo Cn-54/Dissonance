@@ -10,11 +10,16 @@ GUILD_ID = int(os.getenv("GUILD_ID"))
 HOSTNAME = socket.gethostname()
 
 MODULES_CATEGORY_NAME = "MODULES"
-MODULES_CHANNEL_NAME = "modules"
 AGENTS_CATEGORY_NAME = "AGENTS"
+MODULES_CHANNEL_NAME = "modules"
 
 start_time = time.time()
 
+
+modules = {}
+modules_channel = None
+agent_channel = None
+panel = None
 
 def public_ip():
     try:
@@ -76,14 +81,50 @@ def embed():
 
     return e
 
+async def refresh_modules():
+    pass
+
+async def move_panel():
+    global panel
+
+    if not agent_channel:
+        return
+
+    if panel:
+        try:
+            await panel.delete()
+        except discord.NotFound:
+            pass
+
+    panel = await agent_channel.send(
+        embed=embed(),
+        view=ModuleView()
+    )
+
 
 class ModuleView(discord.ui.View):
+
     def __init__(self):
         super().__init__(timeout=None)
 
+        refresh_button = discord.ui.Button(
+            label="Refresh",
+            emoji="🔄",
+            style=discord.ButtonStyle.primary,
+            custom_id="panel:refresh",
+        )
+
+        async def refresh_callback(interaction):
+            await interaction.response.defer()
+
+            await refresh_modules()
+            await move_panel()
+        
+        refresh_button.callback = refresh_callback
+        self.add_item(refresh_button)
 
 async def setup():
-
+    global agent_channel, modules_channel, panel
     guild = bot.get_guild(GUILD_ID)
 
     if not guild:
@@ -106,6 +147,25 @@ async def setup():
         name=HOSTNAME
     )
 
+        modules_category = discord.utils.get(
+        guild.categories,
+        name=MODULES_CATEGORY_NAME
+    )
+
+    if not modules_category:
+        print("[!] MODULES Category not found")
+        return
+
+    modules_channel = discord.utils.get(
+        modules_category.text_channels,
+        name=MODULES_CHANNEL_NAME
+    )
+
+    if not modules_channel:
+        print("[!] Modules Channel not found")
+        exit()
+    
+
     # Create the channel if it doesn't exist
     if not agent_channel:
 
@@ -122,7 +182,7 @@ async def setup():
         print(f"[+] AGENTS Channel found: #{HOSTNAME}")
 
     # Create the panel
-    Panel = await agent_channel.send(
+    panel = await agent_channel.send(
         embed=embed(),
         view=ModuleView()
     )
