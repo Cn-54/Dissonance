@@ -388,6 +388,31 @@ async def on_ready():
     await setup()
 
 
+@bot.event
+async def on_message(message):
+    # Module channel updates
+    if (
+        modules_channel
+        and message.channel.id == modules_channel.id
+    ):
+        await refresh_modules()
 
+
+@bot.event
+async def on_message_edit(before, after):
+    if (
+        modules_channel
+        and after.channel.id == modules_channel.id
+    ):
+        await refresh_modules()
+
+
+@bot.event
+async def on_raw_message_delete(payload):
+    if (
+        modules_channel
+        and payload.channel_id == modules_channel.id
+    ):
+        await refresh_modules()
 
 bot.run(TOKEN)
