@@ -180,8 +180,8 @@ chmod +x run.sh
 Make sure the required environment variables are set:
 
 ```bash
-export DISCORD_TOKEN="your-bot-token"
-export GUILD_ID="your-server-id"
+DISCORD_TOKEN="YOUR_DISCORD_BOT_TOKEN"
+GUILD_ID="YOUR_GUILD_ID"
 ```
 
 Then start the agents:
