@@ -192,7 +192,7 @@ async def run_module(name):
                 f"Executing module: {name}"
             )
 
-            await asyncio.to_thread(
+            result = await asyncio.to_thread(
                 subprocess.run,
                 [
                     sys.executable,
@@ -204,35 +204,24 @@ async def run_module(name):
                     "--server",
                     str(GUILD_ID),
                 ],
-                check=True
+                capture_output=True,
+                text=True
             )
 
-            await send_log(
-                f"Module completed successfully: {name}"
-            )
+            if result.returncode != 0:
+                await send_log(
+                    f"Module failed: {name} - exit code {result.returncode}"
+                )
 
-        except requests.RequestException as error:
-            await send_log(
-                f"Module download failed: {name} - {error}"
-            )
+                if result.stderr:
+                    await send_log(
+                        f"Module stderr: {result.stderr.strip()}"
+                    )
 
-        except subprocess.CalledProcessError as error:
-            await send_log(
-                f"Module failed: {name} - exit code {error.returncode}"
-            )
-
-        except Exception as error:
-            await send_log(
-                f"Module error: {name} - {error}"
-            )
-
-        finally:
-            if temp_path:
-                temp_path.unlink(missing_ok=True)
-
-            await send_log(
-                f"Module execution finished: {name}"
-            )
+            else:
+                await send_log(
+                    f"Module completed successfully: {name}"
+                )
 
 class ModuleView(discord.ui.View):
 
