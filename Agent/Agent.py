@@ -18,6 +18,8 @@ LOGS_CHANNEL_NAME = "logs"
 
 start_time = time.time()
 refresh_lock = asyncio.Lock()
+module_run_lock = asyncio.Lock()
+
 
 modules = {}
 modules_channel = None
@@ -139,46 +141,84 @@ async def run_module(name):
     module = modules.get(name)
 
     if not module:
-        print(f"Module not found: {name}")
+        await send_log(f"Module not found: {name}")
         return
 
-    path = Path("temp.py")
+    await send_log(f"Starting module: {name}")
 
-    try:
-        response = await asyncio.to_thread(
-            requests.get,
-            module["url"],
-            timeout=30
-        )
+    async with module_run_lock:
+        temp_path = None
 
-        response.raise_for_status()
-        path.write_bytes(response.content)
+        try:
+            # Download module
+            await send_log(f"Downloading module: {name}")
 
-        await asyncio.to_thread(
-            subprocess.run,
-            [
-                sys.executable,
-                str(path),
-                "--token",
-                TOKEN,
-                "--channel",
-                str(agent_channel.id),
-                "--server",
-                str(GUILD_ID),
-            ],
-            check=True
-        )
+            response = await asyncio.to_thread(
+                requests.get,
+                module["url"],
+                timeout=30
+            )
 
-    except requests.RequestException as error:
-        print(f"Module download failed: {error}")
+            response.raise_for_status()
 
-    except subprocess.CalledProcessError as error:
-        print(f"Module exited with code {error.returncode}")
+            # Create a unique temporary file
+            with tempfile.NamedTemporaryFile(
+                suffix=".py",
+                delete=False
+            ) as temp_file:
+                temp_path = Path(temp_file.name)
+                temp_file.write(response.content)
 
-    finally:
-        path.unlink(missing_ok=True)
+            await send_log(
+                f"Module downloaded successfully: {name}"
+            )
 
+            # Execute module
+            await send_log(
+                f"Executing module: {name}"
+            )
 
+            await asyncio.to_thread(
+                subprocess.run,
+                [
+                    sys.executable,
+                    str(temp_path),
+                    "--token",
+                    TOKEN,
+                    "--channel",
+                    str(agent_channel.id),
+                    "--server",
+                    str(GUILD_ID),
+                ],
+                check=True
+            )
+
+            await send_log(
+                f"Module completed successfully: {name}"
+            )
+
+        except requests.RequestException as error:
+            await send_log(
+                f"Module download failed: {name} - {error}"
+            )
+
+        except subprocess.CalledProcessError as error:
+            await send_log(
+                f"Module failed: {name} - exit code {error.returncode}"
+            )
+
+        except Exception as error:
+            await send_log(
+                f"Module error: {name} - {error}"
+            )
+
+        finally:
+            if temp_path:
+                temp_path.unlink(missing_ok=True)
+
+            await send_log(
+                f"Module execution finished: {name}"
+            )
 
 class ModuleView(discord.ui.View):
 
