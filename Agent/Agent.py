@@ -150,6 +150,42 @@ async def move_panel():
     )
     await send_log("New control panel created")
 
+async def update_panel():
+    global panel
+
+    if not agent_channel:
+        await send_log(
+            "Cannot update panel - agent channel unavailable"
+        )
+        return
+
+    if not panel:
+        panel = await agent_channel.send(
+            embed=create_embed(),
+            view=ModuleView()
+        )
+        return
+
+    try:
+        await panel.edit(
+            embed=create_embed(),
+            view=ModuleView()
+        )
+
+        await send_log(
+            "Control panel updated"
+        )
+
+    except discord.NotFound:
+        await send_log(
+            "Control panel not found - creating new panel"
+        )
+
+        panel = await agent_channel.send(
+            embed=create_embed(),
+            view=ModuleView()
+        )
+
 
 async def run_module(name):
     module = modules.get(name)
@@ -391,28 +427,22 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     # Module channel updates
-    if (
-        modules_channel
-        and message.channel.id == modules_channel.id
-    ):
+    if (modules_channel and message.channel.id == modules_channel.id ):
         await refresh_modules()
+        await update_panel()
 
 
 @bot.event
 async def on_message_edit(before, after):
-    if (
-        modules_channel
-        and after.channel.id == modules_channel.id
-    ):
+    if (modules_channel and after.channel.id == modules_channel.id):
         await refresh_modules()
+        await update_panel()
 
 
 @bot.event
 async def on_raw_message_delete(payload):
-    if (
-        modules_channel
-        and payload.channel_id == modules_channel.id
-    ):
+    if (modules_channel and payload.channel_id == modules_channel.id):
         await refresh_modules()
+        await update_panel()
 
 bot.run(TOKEN)
